@@ -1,35 +1,35 @@
-rulesPath: ../ssti-rules.yaml
+rulesPath: ../rules/ssti-rules.yaml
 providers:
   - name: java
-    dataPath: ./data/ssti-tests
+    dataPath: ./data/ssti-test-project
   - name: builtin
-    dataPath: ./data/ssti-tests
+    dataPath: ./data/ssti-test-project
 tests:
-  - ruleID: unsafe-string-interpolation-00000
+  - ruleID: ssti-replace-method-00001
     testCases:
       - name: tc-1-script-syntax
         analysisParams:
           mode: "source-only"
         hasIncidents:
-          exactly: 1
-      # - name: tc-2-no-script-syntax
-      #   analysisParams:
-      #     mode: "source-only"
-      #   hasIncidents:
-      #     exactly: 0
+          exactly: 2
+      - name: tc-2-no-script-syntax
+        analysisParams:
+          mode: "source-only"
+        hasIncidents:
+          exactly: 2
 
-  # - ruleID: ssti-stringsubstitutor-00002
-  #   testCases:
-  #     - name: tc-1-create-interpolator
-  #       analysisParams:
-  #         mode: "source-only"
-  #       hasIncidents:
-  #         exactly: 1
-  #     - name: tc-2-secure-lookup
-  #       analysisParams:
-  #         mode: "source-only"
-  #       hasIncidents:
-  #         exactly: 0
+  - ruleID: ssti-stringsubstitutor-00002
+    testCases:
+      - name: tc-1-create-interpolator
+        analysisParams:
+          mode: "source-only"
+        hasIncidents:
+          exactly: 1
+      - name: tc-2-secure-lookup
+        analysisParams:
+          mode: "source-only"
+        hasIncidents:
+          exactly: 1
 
   # - ruleID: ssti-replace-method-00003
   #   testCases:
@@ -37,7 +37,7 @@ tests:
   #       analysisParams:
   #         mode: "source-only"
   #       hasIncidents:
-  #         exactly: 1
+  #         exactly: 0
   #     - name: tc-2-safe-replace
   #       analysisParams:
   #         mode: "source-only"

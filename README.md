@@ -26,6 +26,14 @@ kantra analyze --input=tests/data/ssti-test-project --output=output --overwrite 
  --rules rules
 ```
 
+6. running tests
+
+```bash
+cd ssti/tests
+kantra test .
+```
+
+
 Now you can open the report from Kantra into the browser e.g. 
 file:///somepath/demo-custom-rules/security/output/static-report/index.html#/issues/applications
 
