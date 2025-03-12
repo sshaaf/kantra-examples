@@ -1,0 +1,211 @@
+- ruleID: ssti-replace-method-00001
+  category: mandatory
+  effort: 2
+  labels:
+  - konveyor.io/source=java8
+  - konveyor.io/source=openjdk
+  - konveyor.io/target=openjdk17
+  - security
+  when:
+      java.referenced:
+        pattern: org.apache.commons.text.StringSubstitutor.replace
+        location: METHOD_CALL     
+      builtin.filecontent:
+        filePattern: .*\.java
+        pattern: \"$\{script:javascript:[^}]*\}\"
+  description: Unsafe String Interpolation with Script Execution
+  message: The app is using unsafe string interpolation that allows script execution,
+    which may lead to Server-Side Template Injection (SSTI). To fix this, disable scripting
+    in interpolators by using a custom Lookup implementation or whitelist-based approach.
+    Example Use `StringSubstitutor(new NoScriptLookup())` where `NoScriptLookup` prevents
+    script execution.
+
+        **Fix:**
+    ```java
+    public static void main(String[] args) {
+        StringSubstitutor interpolator = new StringSubstitutor(new NoScriptLookup());
+        String out = interpolator.replace("${script:javascript:java.lang.Runtime.getRuntime().exec('touch /tmp/CVE-2022-42889')}");
+        System.out.println(out); 
+    
+
+    static class NoScriptLookup implements StringLookup {
+        @Override
+        public String lookup(String key) {
+            if (key != null && key.startsWith("script:")) {
+                return "${" + key + "}";
+            }
+            return null;
+        }
+    ```
+  links:
+    - title: CVE-2022-42889
+      url: https://nvd.nist.gov/vuln/detail/cve-2022-42889
+
+- ruleID: ssti-stringsubstitutor-00002
+  category: mandatory
+  effort: 7
+  labels:
+  - konveyor.io/source=java8
+  - konveyor.io/source=openjdk
+  - konveyor.io/target=openjdk17
+  - security
+  when:
+      java.referenced:
+        pattern: org.apache.commons.text.StringSubstitutor.createInterpolator
+        location: METHOD_CALL
+      builtin.filecontent:
+        filePattern: .*\.(java)
+        pattern: "StringSubstitutor.*createInterpolator.*\\(\\)|StringSubstitutor.*new.*\\(.*\\)"
+  description: Use of StringSubstitutor with Scripting Enabled
+  message: |
+    The app is using StringSubstitutor with scripting enabled, which may lead
+    to arbitrary code execution. This vulnerability can be exploited by attackers
+    to inject malicious scripts into interpolated strings.
+
+    **Impact**: Attackers can execute arbitrary code on the server by leveraging
+    the `${script:...}` syntax.
+
+    **Fix**: To resolve this issue, replace `StringSubstitutor.createInterpolator()`
+    with a secure custom Lookup implementation. For example:
+
+    ```java
+    public static void main(String[] args) {
+        StringSubstitutor interpolator = new StringSubstitutor(new SecureLookup());
+        String out = interpolator.replace("${script:javascript:alert('SSTI!')}");
+        System.out.println(out); 
+    }
+
+    static class SecureLookup implements StringLookup {
+        @Override
+        public String lookup(String key) {
+            if (key != null && key.startsWith("script:")) {
+                throw new IllegalArgumentException("Script execution is not allowed.");
+            }
+            return null;
+        }
+    }
+    ```
+
+    By implementing a custom `Lookup` class like `SecureLookup`, you can enforce
+    safe variable substitution and prevent script execution.
+  links:
+    - title: CVE-2022-42889
+      url: https://nvd.nist.gov/vuln/detail/CVE-2022-42889
+    - title: Apache Commons Text Documentation
+      url: https://commons.apache.org/proper/commons-text/
+    - title: Preventing SSTI Vulnerabilities
+      url: https://owasp.org/www-community/attacks/Server_Side_Template_Injection
+
+- ruleID: ssti-replace-method-00003
+  category: mandatory
+  effort: 7
+  labels:
+  - konveyor.io/source=java8
+  - konveyor.io/source=openjdk
+  - konveyor.io/target=openjdk17
+  - security
+  when:
+      java.referenced:
+        pattern: org.apache.commons.text.StringSubstitutor.replace
+        location: METHOD_CALL
+      builtin.filecontent:
+        filePattern: .*\.(java)
+        pattern: "StringSubstitutor.*replace.*\\(\".*\\$\\{script:.*\\}\\)"
+  description: Potential SSTI Vulnerability in Replace Method
+  message: |
+    The app is using the `replace` method of StringSubstitutor with potentially
+    unsafe input, which may lead to Server-Side Template Injection (SSTI). This
+    vulnerability can result in arbitrary code execution if malicious input is processed.
+
+    **Impact**: Attackers can exploit this vulnerability to execute arbitrary scripts
+    or commands on the server.
+
+    **Fix**: To resolve this issue, sanitize all inputs before interpolation and ensure
+    that no script execution is allowed. For example:
+
+    ```java
+    public static void main(String[] args) {
+        StringSubstitutor interpolator = new StringSubstitutor(new SafeLookup());
+        String out = interpolator.replace("${script:javascript:alert('SSTI!')}");
+        System.out.println(out); 
+    }
+
+    static class SafeLookup implements StringLookup {
+        @Override
+        public String lookup(String key) {
+            if (key != null && key.startsWith("script:")) {
+                return "${" + key + "}";
+            }
+            return null;
+        }
+    }
+    ```
+
+    By implementing a custom `Lookup` class like `SafeLookup`, you can prevent
+    script execution during string interpolation.
+  links:
+    - title: CVE-2022-42889
+      url: https://nvd.nist.gov/vuln/detail/CVE-2022-42889
+    - title: Apache Commons Text Documentation
+      url: https://commons.apache.org/proper/commons-text/
+    - title: Preventing SSTI Vulnerabilities
+      url: https://owasp.org/www-community/attacks/Server_Side_Template_Injection
+
+
+- ruleID: ssti-script-syntax-00004
+  category: mandatory
+  effort: 7
+  labels:
+  - konveyor.io/source=java8
+  - konveyor.io/source=openjdk
+  - konveyor.io/target=openjdk17
+  - security
+  when:
+      builtin.filecontent:
+        filePattern: .*\.(java|properties|jsp|jspf|tag|xml|txt|yaml)
+        pattern: \"\${script:(javascript|groovy|python|ruby):[^}]*}"
+  description: Use of Scripting Syntax in Strings
+  message: |
+    The app contains strings with scripting syntax (\${script:...}), which
+    may indicate an SSTI vulnerability. This vulnerability can result in arbitrary
+    code execution if malicious input is processed.
+
+    **Impact**: Attackers can exploit this vulnerability to execute arbitrary scripts
+    or commands on the server.
+
+    **Fix**: To resolve this issue, review and secure these usages by replacing
+    `${script:...}` with safe alternatives or disabling scripting entirely. For example:
+
+    ```java
+    public static void main(String[] args) {
+        StringSubstitutor interpolator = new StringSubstitutor(new WhitelistLookup(Map.of("allowedVar", "safeValue")));
+        String out = interpolator.replace("${allowedVar}");
+        System.out.println(out); 
+    }
+
+    static class WhitelistLookup implements StringLookup {
+        private final Map<String, String> whitelist;
+
+        public WhitelistLookup(Map<String, String> whitelist) {
+            this.whitelist = whitelist;
+        }
+
+        @Override
+        public String lookup(String key) {
+            if (whitelist.containsKey(key)) {
+                return whitelist.get(key);
+            }
+            return "${" + key + "}";
+        }
+    }
+    ```
+
+    By implementing a custom `Lookup` class like `WhitelistLookup`, you can restrict
+    allowed variables and prevent script execution.
+  links:
+    - title: CVE-2022-42889
+      url: https://nvd.nist.gov/vuln/detail/CVE-2022-42889
+    - title: Apache Commons Text Documentation
+      url: https://commons.apache.org/proper/commons-text/
+    - title: Preventing SSTI Vulnerabilities
+      url: https://owasp.org/www-community/attacks/Server_Side_Template_Injection
