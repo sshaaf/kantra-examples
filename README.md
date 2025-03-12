@@ -6,15 +6,15 @@ This is an example project for custom rules using kantra
 1. Download kantra [here](https://github.com/konveyor/kantra/releases)
 2. Extract the archive
 
-3. Rename Kantra cli and move it to PATH. 
+3. Rename Kantra cli and move it to PATH. (e.g)
 ```bash
- mv darwin-kantra kantra
+ mv darwin-kantra $HOME/bin/kantra
 ```
 
 4. Add all the files from the extracted folder into `.kantra` 
 ```bash
  cd kantra.darwin.arm64/
- mv $HOME/bin/kantra .
+ mv * $HOME/.kantra
 
 ```
 5. run the analysis (e.g. in ssti dir)
