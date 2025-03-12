@@ -15,8 +15,11 @@ This is an example project for custom rules using kantra
 ```bash
  cd kantra.darwin.arm64/
  mv * $HOME/.kantra
-
 ```
+
+>* NOTE: Mac user will likely need to run the following command before running the cli.
+`sudo xattr -dr com.apple.quarantine kantra`
+
 5. run the analysis (e.g. in ssti dir)
 ```bash
 kantra analyze --input=tests/data/ssti-test-project --output=output --overwrite  --target openjdk17
